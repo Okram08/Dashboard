@@ -7,7 +7,7 @@ df = pd.read_csv("trade_history.csv")
 df["time"] = pd.to_datetime(df["time"], dayfirst=True)
 
 # Filtrage des trades fermés uniquement pour l'analyse de performance
-df_closed = df[df["position"].str.contains("Close", case=False)].copy()
+df_closed = df[df["dir"].str.contains("Close", case=False)].copy()
 
 # Ajout colonne Result
 df_closed["Result"] = df_closed["closedPnl"].apply(lambda x: "Gain" if x > 0 else "Perte" if x < 0 else "Neutre")
