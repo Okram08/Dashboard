@@ -10,7 +10,7 @@ df["time"] = pd.to_datetime(df["time"], dayfirst=True)
 df["Result"] = df["closedPnl"].apply(lambda x: "Gain" if x > 0 else "Perte" if x < 0 else "Neutre")
 
 # Titre
-st.title("📈 Dashboard de Trading ")
+st.title("📈 Dashboard Gordy🍻")
 
 # KPIs
 col1, col2, col3, col4 = st.columns(4)
@@ -26,8 +26,6 @@ coins = st.multiselect("🔍 Filtrer par coin :", df["coin"].unique(), default=d
 df_filtered = df[df["coin"].isin(coins)]
 
 # Graphique PnL dans le temps
-fig_pnl = px.line(df_filtered, x="time", y="closedPnl", title="Évolution du PnL dans le temps", markers=True)
-st.plotly_chart(fig_pnl, use_container_width=True)
 
 df_filtered["PnL_cum"] = df_filtered["closedPnl"].cumsum()
 fig_cum = px.line(df_filtered, x="time", y="PnL_cum", title="PnL Cumulé", markers=True)
