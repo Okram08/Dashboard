@@ -9,8 +9,8 @@ df["time"] = pd.to_datetime(df["time"], dayfirst=True)
 # Nettoyage des colonnes
 df["Result"] = df["closedPnl"].apply(lambda x: "Gain" if x > 0 else "Perte" if x < 0 else "Neutre")
 
-# Filtrer les trades où la colonne 'close' est non nulle
-df_filtered = df[df["close"].notna()]
+# Filtrer les trades où la colonne 'close' est non nulle et la direction est 'long' ou 'short'
+df_filtered = df[df["close"].notna() & df["dir"].isin(["long", "short"])]
 
 # Titre principal
 st.title("📈 Dashboard de Trading Hyperliquid")
@@ -63,3 +63,4 @@ st.plotly_chart(fig_result, use_container_width=True)
 # Tableau final
 st.subheader("📋 Détail des trades")
 st.dataframe(df_filtered.sort_values(by="time", ascending=False), use_container_width=True)
+
