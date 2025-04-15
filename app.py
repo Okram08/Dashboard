@@ -29,6 +29,11 @@ df_filtered = df[df["coin"].isin(coins)]
 fig_pnl = px.line(df_filtered, x="time", y="closedPnl", title="Évolution du PnL dans le temps", markers=True)
 st.plotly_chart(fig_pnl, use_container_width=True)
 
+df_filtered["PnL_cum"] = df_filtered["closedPnl"].cumsum()
+fig_cum = px.line(df_filtered, x="time", y="PnL_cum", title="PnL Cumulé", markers=True)
+st.plotly_chart(fig_cum, use_container_width=True)
+
+
 # Histogramme des PnL
 fig_hist = px.histogram(df_filtered, x="closedPnl", nbins=20, title="Distribution des PnL par trade")
 st.plotly_chart(fig_hist, use_container_width=True)
