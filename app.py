@@ -19,6 +19,10 @@ col2.metric("📊 Nombre de Trades", len(df))
 col3.metric("✅ % Gagnants", f"{(df['closedPnl'] > 0).mean() * 100:.1f}%")
 col4.metric("💸 Frais Totaux", f"{df['fee'].sum():.2f} $")
 
+df_filtered["jour"] = df_filtered["time"].dt.date
+df_filtered["mois"] = df_filtered["time"].dt.to_period("M").astype(str)
+
+
 st.markdown("---")
 
 # Filtres
@@ -26,11 +30,9 @@ coins = st.multiselect("🔍 Filtrer par coin :", df["coin"].unique(), default=d
 df_filtered = df[df["coin"].isin(coins)]
 
 # Graphique PnL dans le temps
-
 df_filtered["PnL_cum"] = df_filtered["closedPnl"].cumsum()
 fig_cum = px.line(df_filtered, x="time", y="PnL_cum", title="PnL Cumulé", markers=True)
 st.plotly_chart(fig_cum, use_container_width=True)
-
 
 # Histogramme des PnL
 fig_hist = px.histogram(df_filtered, x="closedPnl", nbins=20, title="Distribution des PnL par trade")
