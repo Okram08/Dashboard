@@ -6,63 +6,138 @@ import plotly.express as px
 df = pd.read_csv("trade_history.csv")
 df["time"] = pd.to_datetime(df["time"], dayfirst=True)
 
-# Filtrage des trades fermés uniquement pour l'analyse de performance
-df_closed = df[df["dir"].str.contains("Close", case=False)].copy()
+# Nettoyage & enrichissement
+df["Result"] = df["closedPnl"].apply(lambda x: "Gain" if x > 0 else "Perte" if x < 0 else "Neutre")
+df["jour"] = df["time"].dt.date
+df["mois"] = df["time"].dt.to_period("M").astype(str)
+df["PnL_cum"] = df["closedPnl"].cumsum()
 
-# Ajout colonne Result
-df_closed["Result"] = df_closed["closedPnl"].apply(lambda x: "Gain" if x > 0 else "Perte" if x < 0 else "Neutre")
+# Titre
+st.title("📈 Dashboard de Gordy")
 
-# ---- TITRE
-st.title("📊 Dashboard de Trading")
-
-# --- METRIQUES PRINCIPALES
+# KPIs de base
 col1, col2, col3, col4 = st.columns(4)
-col1.metric("💰 PnL Total", f"{df_closed['closedPnl'].sum():.2f} $")
-col2.metric("📊 Nombre de Trades", len(df_closed))
-col3.metric("✅ % Gagnants", f"{(df_closed['closedPnl'] > 0).mean() * 100:.1f}%")
-col4.metric("💸 Frais Totaux", f"{df['fee'].sum():.2f} $")  # On garde tous les frais (open+close)
 
-# --- METRIQUES AVANCEES
-gain_moyen = df_closed[df_closed["closedPnl"] > 0]["closedPnl"].mean()
-perte_moyenne = df_closed[df_closed["closedPnl"] < 0]["closedPnl"].mean()
-risk_reward = abs(gain_moyen / perte_moyenne) if perte_moyenne != 0 else 0
+with col1:
+    st.metric("💰 PnL Total", f"{df['closedPnl'].sum():.2f} $")
+    st.caption("ℹ️ Somme totale des profits et pertes réalisés.")
 
-mean_return = df_closed["closedPnl"].mean()
-std_return = df_closed["closedPnl"].std()
+with col2:
+    st.metric("📊 Nombre de Trades", len(df))
+    st.caption("ℹ️ Total des positions ouvertes et clôturées dans l’historique.")
+
+with col3:
+    st.metric("✅ % Gagnants", f"{(df['closedPnl'] > 0).mean() * 100:.1f}%")
+    st.caption("ℹ️ Proportion des trades avec un profit net positif.")
+
+with col4:
+    st.metric("💸 Frais Totaux", f"{df['fee'].sum():.2f} $")
+    st.caption("ℹ️ Total des frais de transaction (commissions).")
+
+# Ratio de Sharpe simplifié + infobulle
+mean_return = df["closedPnl"].mean()
+std_return = df["closedPnl"].std()
 sharpe_ratio = mean_return / std_return if std_return != 0 else 0
 
-st.markdown("### 📈 Indicateurs de Performance")
-col5, col6, col7 = st.columns(3)
-col5.metric("📈 Gain moyen", f"{gain_moyen:.2f} $")
-col6.metric("📉 Perte moyenne", f"{perte_moyenne:.2f} $")
-col7.metric("⚖️ Risk/Reward", f"{risk_reward:.2f}")
+col_ratio, _ = st.columns([1, 3])
+with col_ratio:
+    st.metric("📐 Ratio de Sharpe", f"{sharpe_ratio:.2f}")
+    st.caption("ℹ️ Indique le rapport rendement/risque : plus il est élevé, mieux c’est. Calculé ici : moyenne des PnL ÷ écart-type.")
 
-# Ratio de Sharpe avec info-bulle
-with st.container():
-    st.markdown("""
-    <div style="display: flex; align-items: center;">
-        <div style="font-size: 16px; margin-right: 10px;"><b>📐 Ratio de Sharpe :</b> {0:.2f}</div>
-        <div title="Le ratio de Sharpe mesure la performance ajustée au risque. Plus il est élevé, mieux c'est.">🛈</div>
-    </div>
-    """.format(sharpe_ratio), unsafe_allow_html=True)
-
+# Filtres
 st.markdown("---")
+coins = st.multiselect("🔍 Filtrer par coin :", df["coin"].unique(), default=df["coin"].unique())
+date_min, date_max = st.date_input("📆 Filtrer par date :", [df["time"].min(), df["time"].max()])
 
-# --- FILTRE PAR COIN
-coins = st.multiselect("🔍 Filtrer par coin :", df_closed["coin"].unique(), default=df_closed["coin"].unique())
-df_filtered = df_closed[df_closed["coin"].isin(coins)]
+df_filtered = df[
+    (df["coin"].isin(coins)) &
+    (df["time"] >= pd.to_datetime(date_min)) &
+    (df["time"] <= pd.to_datetime(date_max))
+].copy()
 
-# --- GRAPHIQUE PNL DANS LE TEMPS
-fig_pnl = px.line(df_filtered, x="time", y="closedPnl", title="📅 PnL au fil du temps", markers=True,
-                  color_discrete_sequence=["#00CC96"])
-fig_pnl.update_layout(plot_bgcolor="#f9f9f9", paper_bgcolor="#f9f9f9")
+df_filtered["PnL_cum"] = df_filtered["closedPnl"].cumsum()
+
+# Statistiques avancées
+gains = df_filtered[df_filtered["closedPnl"] > 0]["closedPnl"]
+pertes = df_filtered[df_filtered["closedPnl"] < 0]["closedPnl"]
+
+gain_moyen = gains.mean() if not gains.empty else 0
+perte_moyenne = pertes.mean() if not pertes.empty else 0
+risk_reward = abs(gain_moyen / perte_moyenne) if perte_moyenne != 0 else 0
+
+st.markdown("### 📊 Statistiques Avancées")
+col1, col2, col3 = st.columns(3)
+col1.metric("📈 Gain moyen", f"{gain_moyen:.2f} $")
+col1.caption("ℹ️ Moyenne des profits sur les trades gagnants.")
+
+col2.metric("📉 Perte moyenne", f"{perte_moyenne:.2f} $")
+col2.caption("ℹ️ Moyenne des pertes sur les trades perdants.")
+
+col3.metric("⚖️ Risk/Reward", f"{risk_reward:.2f}")
+col3.caption("ℹ️ Rapport entre gain moyen et perte moyenne.")
+
+# Graphiques avec palette personnalisée
+st.markdown("---")
+color_palette = ["#2E86AB", "#F24405", "#44AF69", "#DA4167", "#F9CB40"]
+
+# Winrate par coin
+winrate_coin = df_filtered.groupby("coin")["closedPnl"].apply(lambda x: (x > 0).mean() * 100).reset_index(name="WinRate (%)")
+fig_winrate = px.bar(winrate_coin, x="coin", y="WinRate (%)", title="Win Rate par Coin", color="coin", color_discrete_sequence=color_palette)
+st.plotly_chart(fig_winrate, use_container_width=True)
+
+# PnL dans le temps
+fig_pnl = px.line(df_filtered, x="time", y="closedPnl", title="Évolution du PnL dans le temps", markers=True,
+                  color_discrete_sequence=["#2E86AB"])
 st.plotly_chart(fig_pnl, use_container_width=True)
 
-# --- PIE CHART RESULTATS
-fig_result = px.pie(df_filtered, names="Result", title="✅ Répartition des trades gagnants vs perdants",
-                    color_discrete_map={"Gain": "#2ecc71", "Perte": "#e74c3c", "Neutre": "#95a5a6"})
+# PnL Cumulé
+fig_cum = px.line(df_filtered, x="time", y="PnL_cum", title="PnL Cumulé", markers=True,
+                  color_discrete_sequence=["#44AF69"])
+st.plotly_chart(fig_cum, use_container_width=True)
+
+# PnL par jour
+pnl_jour = df_filtered.groupby("jour")["closedPnl"].sum().reset_index()
+fig_jour = px.bar(pnl_jour, x="jour", y="closedPnl", title="PnL par Jour", color="closedPnl", color_continuous_scale="Tealrose")
+st.plotly_chart(fig_jour, use_container_width=True)
+
+# PnL par mois
+pnl_mois = df_filtered.groupby("mois")["closedPnl"].sum().reset_index()
+fig_mois = px.bar(pnl_mois, x="mois", y="closedPnl", title="PnL par Mois", color="closedPnl", color_continuous_scale="Mint")
+st.plotly_chart(fig_mois, use_container_width=True)
+
+# Pie gagnant/perdant
+fig_result = px.pie(df_filtered, names="Result", title="Trades gagnants vs perdants", color_discrete_sequence=["#44AF69", "#F24405", "#999999"])
 st.plotly_chart(fig_result, use_container_width=True)
 
-# --- TABLEAU DETAILLE
-st.markdown("### 📋 Détail des trades fermés")
+# PnL par coin
+pnl_coin = df_filtered.groupby("coin")["closedPnl"].sum().reset_index().sort_values(by="closedPnl")
+fig_coin = px.bar(pnl_coin, x="coin", y="closedPnl", title="PnL par Coin", color="closedPnl", color_continuous_scale="Bluered")
+st.plotly_chart(fig_coin, use_container_width=True)
+
+# Analyse par taille de position si dispo
+if "size" in df_filtered.columns:
+    fig_size = px.scatter(
+        df_filtered,
+        x="size",
+        y="closedPnl",
+        color="Result",
+        title="PnL en fonction de la Taille de Position",
+        size="closedPnl",
+        hover_data=["coin", "time"],
+        color_discrete_sequence=color_palette
+    )
+    st.plotly_chart(fig_size, use_container_width=True)
+
+# Durée des trades si dispo
+if "openTime" in df_filtered.columns:
+    df_filtered["openTime"] = pd.to_datetime(df_filtered["openTime"], dayfirst=True)
+    df_filtered["duration_min"] = (df_filtered["time"] - df_filtered["openTime"]).dt.total_seconds() / 60
+    fig_duree = px.histogram(df_filtered, x="duration_min", nbins=30, title="Durée des trades (minutes)", color_discrete_sequence=["#2E86AB"])
+    st.plotly_chart(fig_duree, use_container_width=True)
+
+# Tableau
+st.subheader("📋 Détail des trades")
 st.dataframe(df_filtered.sort_values(by="time", ascending=False), use_container_width=True)
+
+# Export
+st.download_button("📥 Télécharger les données filtrées", df_filtered.to_csv(index=False), file_name="filtered_trades.csv")
