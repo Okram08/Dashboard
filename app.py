@@ -102,7 +102,7 @@ st.plotly_chart(fig_jour, use_container_width=True)
 
 # PnL par mois
 pnl_mois = df_filtered.groupby("mois")["closedPnl"].sum().reset_index()
-fig_mois = px.bar(pnl_mois, x="mois", y="closedPnl", title="PnL par Mois", color="closedPnl", color_continuous_scale="rdylgn")
+fig_mois = px.bar(pnl_mois, x="mois", y="closedPnl", title="PnL par Mois", color="closedPnl", color_continuous_scale="greens")
 st.plotly_chart(fig_mois, use_container_width=True)
 
 # Pie gagnant/perdant
@@ -111,7 +111,7 @@ st.plotly_chart(fig_result, use_container_width=True)
 
 # PnL par coin
 pnl_coin = df_filtered.groupby("coin")["closedPnl"].sum().reset_index().sort_values(by="closedPnl")
-fig_coin = px.bar(pnl_coin, x="coin", y="closedPnl", title="PnL par Coin", color="closedPnl", color_continuous_scale="rdylgn")
+fig_coin = px.bar(pnl_coin, x="coin", y="closedPnl", title="PnL par Coin", color="closedPnl", color_continuous_scale="greens")
 st.plotly_chart(fig_coin, use_container_width=True)
 
 # Analyse par taille de position si dispo
