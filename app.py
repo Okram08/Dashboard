@@ -97,7 +97,7 @@ st.plotly_chart(fig_cum, use_container_width=True)
 
 # PnL par jour
 pnl_jour = df_filtered.groupby("jour")["closedPnl"].sum().reset_index()
-fig_jour = px.bar(pnl_jour, x="jour", y="closedPnl", title="PnL par Jour", color="closedPnl", color_continuous_scale="TealRose")
+fig_jour = px.bar(pnl_jour, x="jour", y="closedPnl", title="PnL par Jour", color="closedPnl", color_continuous_scale="TealGreen")
 st.plotly_chart(fig_jour, use_container_width=True)
 
 # PnL par mois
