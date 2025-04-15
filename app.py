@@ -10,7 +10,7 @@ df["time"] = pd.to_datetime(df["time"], dayfirst=True)
 df["Result"] = df["closedPnl"].apply(lambda x: "Gain" if x > 0 else "Perte" if x < 0 else "Neutre")
 
 # Titre
-st.title("📈 Dashboard de Trading Hyperliquid")
+st.title("📈 Dashboard de Trading ")
 
 # KPIs
 col1, col2, col3, col4 = st.columns(4)
