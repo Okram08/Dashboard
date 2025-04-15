@@ -3,13 +3,13 @@ import pandas as pd
 import plotly.express as px
 
 # Chargement des données
-df = pd.read_csv("trade_history.csv")  # Renomme ton fichier si besoin
+df = pd.read_csv("trade_history.csv")
 df["time"] = pd.to_datetime(df["time"], dayfirst=True)
 
-# Nettoyage
+# Nettoyage des colonnes
 df["Result"] = df["closedPnl"].apply(lambda x: "Gain" if x > 0 else "Perte" if x < 0 else "Neutre")
 
-# Titre
+# Titre principal
 st.title("📈 Dashboard de Trading Hyperliquid")
 
 # KPIs
@@ -25,22 +25,34 @@ st.markdown("---")
 coins = st.multiselect("🔍 Filtrer par coin :", df["coin"].unique(), default=df["coin"].unique())
 df_filtered = df[df["coin"].isin(coins)]
 
-# Graphique PnL dans le temps
-fig_pnl = px.line(df_filtered, x="time", y="closedPnl", title="Évolution du PnL dans le temps", markers=True)
+# PnL cumulé dans le temps (daily)
+df_filtered["date"] = df_filtered["time"].dt.date
+daily_pnl = df_filtered.groupby("date")["closedPnl"].sum().cumsum().reset_index()
+fig_pnl = px.line(daily_pnl, x="date", y="closedPnl", title="📆 Évolution du PnL cumulé par jour", markers=True)
+fig_pnl.update_traces(line=dict(color="green"))
 st.plotly_chart(fig_pnl, use_container_width=True)
 
-# Histogramme des PnL
-fig_hist = px.histogram(df_filtered, x="closedPnl", nbins=20, title="Distribution des PnL par trade")
+# Histogramme des PnL plus lisible
+fig_hist = px.histogram(
+    df_filtered,
+    x="closedPnl",
+    nbins=40,
+    title="📊 Distribution des PnL par trade",
+    color_discrete_sequence=["#636EFA"]
+)
+fig_hist.update_layout(bargap=0.2)
 st.plotly_chart(fig_hist, use_container_width=True)
 
-# Pie chart directions
-fig_dir = px.pie(df_filtered, names="dir", title="Répartition des directions de trade")
+# Pie chart directions : uniquement long vs short
+filtered_directions = df_filtered[df_filtered["dir"].isin(["long", "short"])]
+fig_dir = px.pie(filtered_directions, names="dir", title="🧭 Répartition des directions (Long vs Short)")
 st.plotly_chart(fig_dir, use_container_width=True)
 
 # Pie chart gains vs pertes
-fig_result = px.pie(df_filtered, names="Result", title="Trades gagnants vs perdants")
+fig_result = px.pie(df_filtered, names="Result", title="🎯 Trades gagnants vs perdants")
 st.plotly_chart(fig_result, use_container_width=True)
 
-# Tableau des trades
+# Tableau final
 st.subheader("📋 Détail des trades")
 st.dataframe(df_filtered.sort_values(by="time", ascending=False), use_container_width=True)
+
