@@ -13,7 +13,7 @@ df["mois"] = df["time"].dt.to_period("M").astype(str)
 df["PnL_cum"] = df["closedPnl"].cumsum()
 
 # Titre
-st.title("📈 Dashboard de Gordy")
+st.title("📈 Dashboard de Gordy🍻")
 
 # KPIs de base
 col1, col2, col3, col4 = st.columns(4)
@@ -28,7 +28,7 @@ with col2:
 
 with col3:
     st.metric("✅ % Gagnants", f"{(df['closedPnl'] > 0).mean() * 100:.1f}%")
-    st.caption("ℹ️ Proportion des trades avec un profit net positif.")
+    st.caption("ℹ️ Proportion des trades avec un profit net positif. PS: Je doise ncore changer car il prend en compte les fees negatif donc fausse le ratio (il faut faire xé en soit ici pour ajouter la moitié negative mais trop fatigué de le faire now hahah")
 
 with col4:
     st.metric("💸 Frais Totaux", f"{df['fee'].sum():.2f} $")
@@ -42,7 +42,7 @@ sharpe_ratio = mean_return / std_return if std_return != 0 else 0
 col_ratio, _ = st.columns([1, 3])
 with col_ratio:
     st.metric("📐 Ratio de Sharpe", f"{sharpe_ratio:.2f}")
-    st.caption("ℹ️ Indique le rapport rendement/risque : plus il est élevé, mieux c’est. Calculé ici : moyenne des PnL ÷ écart-type.")
+    st.caption("ℹ️ Indique le rapport rendement/risque : plus il est élevé, mieux c’est. Calculé ici : moyenne des PnL ÷ écart-type. PS: A voir si je le laisse lui")
 
 # Filtres
 st.markdown("---")
