@@ -13,7 +13,7 @@ df["mois"] = df["time"].dt.to_period("M").astype(str)
 df["PnL_cum"] = df["closedPnl"].cumsum()
 
 # Titre
-st.title("📈 Dashboard de Trading - Analyse Avancée")
+st.title("📈 Dashboard de Gordy")
 
 # KPIs de base
 col1, col2, col3, col4 = st.columns(4)
