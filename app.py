@@ -43,10 +43,16 @@ fig_hist = px.histogram(
 fig_hist.update_layout(bargap=0.2)
 st.plotly_chart(fig_hist, use_container_width=True)
 
-# Pie chart directions : uniquement long vs short
-filtered_directions = df_filtered[df_filtered["dir"].isin(["long", "short"])]
-fig_dir = px.pie(filtered_directions, names="dir", title="🧭 Répartition des directions (Long vs Short)")
+# Nettoyage de la colonne 'dir'
+df_filtered["dir_clean"] = df_filtered["dir"].str.lower().str.strip()
+
+# Filtrer uniquement long / short
+filtered_directions = df_filtered[df_filtered["dir_clean"].isin(["long", "short"])]
+
+# Pie chart
+fig_dir = px.pie(filtered_directions, names="dir_clean", title="🧭 Répartition des directions (Long vs Short)")
 st.plotly_chart(fig_dir, use_container_width=True)
+
 
 # Pie chart gains vs pertes
 fig_result = px.pie(df_filtered, names="Result", title="🎯 Trades gagnants vs perdants")
