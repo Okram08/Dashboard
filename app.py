@@ -106,7 +106,7 @@ fig_mois = px.bar(pnl_mois, x="mois", y="closedPnl", title="PnL par Mois", color
 st.plotly_chart(fig_mois, use_container_width=True)
 
 # Pie gagnant/perdant
-fig_result = px.pie(df_filtered, names="Result", title="Trades gagnants vs perdants", color_discrete_sequence=["#44AF69", "#F24405", "#999999"])
+fig_result = px.pie(df_filtered, names="Result", title="Trades gagnants vs perdants", color_discrete_sequence=["#F24405", "#44AF69", "#999999"])
 st.plotly_chart(fig_result, use_container_width=True)
 
 # PnL par coin
